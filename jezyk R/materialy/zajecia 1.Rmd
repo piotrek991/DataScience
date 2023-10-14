@@ -1,0 +1,522 @@
+---
+title: "Język R w przetwarzaniu danych - zajęcia 1"
+author: "Marcin Koźniewski"
+output:
+  html_document:
+    df_print: paged
+  html_notebook: default
+  pdf_document: default
+---
+
+## Plan przedmiotu
+
+* Wprowadzenie do języka R i środowiska RStudio. 
+* Przetwarzanie danych w R i data munging. 
+* Praca z R w środowisku analitycznym. 
+* Wizualizacja danych w R. 
+* Przykład wykorzystania języka R w rozwiązaniach specjalistycznych
+
+## Zakres zajęć:
+
+* wczytywanie danych z różnymi opcjami
+* podstawowe informacje o danych
+* podstawowe przetwarzanie danych
+
+## Kilka uwag technicznych
+
+Tworzenie nowego notatnika:
+
+File -> new
+
+Problemy z otwarciem pliku Rmd (wyświetla się jako pusty):
+
+* kodowaniem pliku: File -> Reopen with Encoding... -> UTF-8
+* Jeśli nadal jest problem: Session -> Set Working Directory
+ -> Choose Directory... -> [wybieramy katalog z otwieranym plikiem Rmd]
+
+
+Poszukiwanie informacji na temat funkcji w Rstudio i w środowisku R
+
+* `?funkcja`
+* `??funkcja`
+
+Poniżej widzimy wywoływany fragment kodu. W tym wypadku wywoływane jest polecenie
+ograniczające liczbę wypisywanych wartości na ekran.
+
+```{r}
+options(max.print = 100)
+```
+
+
+# Wczytywanie danych
+
+## Dane CSV, TSV, ...
+
+Pliki możemy wczytywać za pomocą poleceń języka R. Dla wygody niedoświadczonych 
+użytkowników możliwe jest wczytywanie plików za pomocą środowiska Rstudio w panelu
+`Environment` (domyślnie usytuowanego z prawej u góry).
+
+```{r}
+schorzenia_serca <- read.csv("heart_disease.csv")
+# to jest komentarz, ignorowany przez interpreter
+```
+
+strzałka w lewo `<-` oznacza przypisanie do zmiennej, natomiast `read.csv` jest 
+poleceniem wczytania danych z pliku CSV ( __comma separated values__ ).
+
+```{r}
+?read.csv
+# 
+# read.table(file, header = FALSE, sep = "", quote = "\"'",
+#            dec = ".", numerals = c("allow.loss", "warn.loss", "no.loss"),
+#            row.names, col.names, as.is = !stringsAsFactors,
+#            na.strings = "NA", colClasses = NA, nrows = -1,
+#            skip = 0, check.names = TRUE, fill = !blank.lines.skip,
+#            strip.white = FALSE, blank.lines.skip = TRUE,
+#            comment.char = "#",
+#            allowEscapes = FALSE, flush = FALSE,
+#            stringsAsFactors = default.stringsAsFactors(),
+#            fileEncoding = "", encoding = "unknown", text, skipNul = FALSE)
+# 
+```
+
+Gotowe szablony specyfikacji formatów danych tabularycznych CSV/TSV:
+- *kropka* jako znak oddzielający część ułamkową liczby i *przecinek* jako separator wartości w wierszu
+- *przecinek* jako znak oddzielający część ułamkową liczby i *średnik* jako separator wartości w wierszu
+- *kropka* jako znak oddzielający część ułamkową liczby i *znak tabulacji(Tab)* jako separator wartości w wierszu
+- *przecinek* jako znak oddzielający część ułamkową liczby i *znak tabulacji(Tab)* jako separator wartości w wierszu
+
+```{r}
+# read.csv(file, header = TRUE, sep = ",", quote = "\"",
+#          dec = ".", fill = TRUE, comment.char = "", ...)
+# 
+# read.csv2(file, header = TRUE, sep = ";", quote = "\"",
+#           dec = ",", fill = TRUE, comment.char = "", ...)
+# 
+# read.delim(file, header = TRUE, sep = "\t", quote = "\"",
+#            dec = ".", fill = TRUE, comment.char = "", ...)
+# 
+# read.delim2(file, header = TRUE, sep = "\t", quote = "\"",
+#             dec = ",", fill = TRUE, comment.char = "", ...)
+
+```
+
+Oczywiście można podawać swoje, specyficzne dla otrzymanych danych znaki.
+Wczytajmy jakieś dane.
+
+Zbadajmy zawartość - wypiszmy kilka pierwszych wierszy.
+
+```{r}
+head(schorzenia_serca)
+```
+
+Wypisanie całego zbioru w notatniku może być czasem uciążliwe, ale w Rstudio 
+powinno wyświetlać się przystępnie.
+
+```{r}
+schorzenia_serca
+```
+
+W Rstudio wyświetlenie danych w karcie
+```{r}
+View(schorzenia_serca)
+```
+
+## Pliki Excel
+
+Potrzebne jest załadowanie biblioteki `xlsx`. W razie potrzeb instalujemy
+bibliotekę za pomocą `install.packages("xlsx")`. Można to też zrobić w panelu
+`Packages` po prawej stronie na dole okna RStudio.
+
+```{r}
+library(xlsx)
+heart_disease_xlsx <- read.xlsx("heart_disease.xlsx",1, startRow = 3)
+
+```
+
+Jest możliwość skorzystania z Rstudio.
+
+# Co udało się nam wczytać? Wydobywanie informacji zbiorczych
+
+Podsumowanie danych w formie podstawowych statystyk opisowych
+```{r}
+summary(schorzenia_serca)
+```
+
+Nazwy kolumn
+```{r}
+colnames(schorzenia_serca)
+```
+
+Możemy je modyfikować przypisując wektor ciągów znaków. Najpierw zbudujmy
+wektor ciągów znaków za pomocą `c()`.
+
+```{r}
+c("Gender",          "age",             "education",       "currentSmoker",   "cigsPerDay",      "BPMeds",          "prevalentStroke",
+ "prevalentHyp",    "diabetes",        "totChol",         "sysBP",           "diaBP",           "BMI",             "heartRate",      
+ "glucose",         "Heart_.stroke"  )
+```
+
+teraz je przypisujemy zmienione nieznacznie ciągi znaków
+```{r}
+colnames(schorzenia_serca) <-
+        c(
+                "Gender",
+                "Age",
+                "Education",
+                "CurrentSmoker",
+                "CigsPerDay",
+                "BPMeds",
+                "PrevalentStroke",
+                "PrevalentHyp",
+                "Diabetes",
+                "TotChol",
+                "SysBP",
+                "DiaBP",
+                "BMI",
+                "HeartRate",
+                "Glucose",
+                "HeartStroke"
+        )
+
+schorzenia_serca
+```
+
+Aby uzyskać liczbę wierszy możemy skorzystać z polecenia `nrow`
+```{r}
+nrow(schorzenia_serca)
+```
+
+Podobnie dla kolumn `ncol`
+```{r}
+ncol(schorzenia_serca)
+```
+
+Dane mogą mieć też zdefiniowany swój indeks (ale przeważnie jest to po prostu 
+numeracja wierszy od wartości 1)
+```{r}
+row.names(schorzenia_serca)
+```
+
+
+Wypisanie wskazanej liczby wierszy od góry
+```{r}
+head(schorzenia_serca, n=3)
+```
+i od końca
+```{r}
+tail(schorzenia_serca, n=3)
+```
+
+
+
+
+Odwołania do poszczególnych kolumn. Żeby nie zasypać informacjami notatnika 
+wypiszemy tylko trochę pierwszych wartości z wybranej kolumny `Gender`
+(indeksowanie zakresem indeksów)
+```{r}
+#schorzenia_serca$Gender
+schorzenia_serca$Gender[1:20]
+```
+
+Znak `$` jest znakiem dostępu do pól w obiektach języka R. W przypadku tabel danych
+umożliwia dostęp do kolumn. Podanie w nawiasie wartości `1:20` oznacza wskazanie
+zakresu indeksów - które wartości mają być wybrane.
+
+W wypisanym wyniku `Levels :` oznacza, że jest to kolumna z wartościami 
+dyskretnymi symbolizowanymi przez skończoną liczbę wartości. W tym wypadku
+`Female` i `Male`. Taki typ jest oznaczany jako `factor`. Aby sprawdzić klasę 
+obiektu (lub typ podstawowy) używamy funkcji `class` lub `typeof`
+
+```{r}
+class(schorzenia_serca$Gender[1:20])
+```
+
+zakres indeksów uzyskaliśmy za pomocą `:` w rzeczywistości jest rozwijany jako 
+ciąg indeksów do wektora wartości
+```{r}
+5:20
+```
+
+Zerknijmy na kilka pozostałych kolumn, np. `Age`
+```{r}
+schorzenia_serca$Age
+typeof(schorzenia_serca$Age)
+```
+Ta kolumna przechowuje wartości typu całkowitoliczbowego `integer`.
+
+```{r}
+schorzenia_serca$SysBP
+typeof(schorzenia_serca$SysBP)
+```
+Tutaj odnajdujemy wartości typu zmiennoprzecinkowego (ale ogólnie możemy
+mówić o typie "numerycznym").
+
+Inne popularne typy danych:
+- `character` - znakowy, takie wartości przypisaliśmy nazwom kolumn
+```{r}
+c("text", "tekst")
+typeof(c("text", "tekst"))
+```
+- `logical`
+```{r}
+c(2==2,2==4)
+c(TRUE, FALSE, T, F)
+typeof(c(TRUE, FALSE, T, F))
+```
+- `Date` - daty (nie jest podstawowy ale jest popularny :-) )
+```{r}
+as.Date("2022-10-20")
+class(as.Date("2022-10-20"))
+```
+jest to format domyślny przedstawiania dat. Do tego jeszcze wrócimy.
+
+Zapytywanie o konkretny typ danych możemy wykonać za pomocą rodziny funkcji
+`is.*`
+```{r}
+is.numeric(schorzenia_serca$Age) #każdy `integer` jest `numeric`
+is.integer(schorzenia_serca$Age)
+is.character(schorzenia_serca$Age)
+is.factor(schorzenia_serca$Age)
+```
+
+Pewne typy danych można łatwo zamieniać korzystając z rodziny funkcji `as.*`
+```{r}
+as.character(schorzenia_serca$Age[1:30])
+```
+jednak nie każda konwersja jest możliwa.
+
+```{r}
+as.integer("---")
+```
+`NA` oznacza brak wartości.
+
+## Wyliczanie statystyk i proste operacje na kolumnach
+
+```{r}
+#suma
+sum(schorzenia_serca$CigsPerDay)
+sum(schorzenia_serca$CigsPerDay, na.rm = TRUE)
+#średnia
+mean(schorzenia_serca$CigsPerDay, na.rm = TRUE)
+sum(schorzenia_serca$CigsPerDay, na.rm = TRUE)/nrow(schorzenia_serca)
+# wartość najmniejsza i największa
+min(schorzenia_serca$CigsPerDay, na.rm = TRUE)
+max(schorzenia_serca$CigsPerDay, na.rm = TRUE)
+# kwantyle (można podać wektor ułamków lub jedną warość)
+quantile(schorzenia_serca$CigsPerDay, probs=c(0.01,0.25,0.5,0.75,0.99), na.rm = TRUE)
+quantile(schorzenia_serca$CigsPerDay, probs=0.75, na.rm = TRUE)
+```
+Jeśli w zbiorze wartości jedna z wartości jest nieokreślona (brakująca) - `NA`, 
+to wynik tych funkcji jest równy `NA`. Zazwyczaj te funkcje mają parametr `na.rm`, 
+który umożliwia pomijanie brakujących wartości. Do brakujących wartości wrócimy.
+`quantile` zwraca obiekt, który nazywamy listą nazwaną.
+
+Wydobycie wszystkich wartości występujących w wektorze danych bez powtórzeń
+```{r}
+unique(schorzenia_serca$PrevalentHyp)
+
+unique(schorzenia_serca$PrevalentStroke)
+unique(schorzenia_serca$Education)
+```
+
+Można wydobyć tabelę z liczebnością poszczególnych wartości
+```{r}
+table(schorzenia_serca$PrevalentHyp)
+
+table(schorzenia_serca$PrevalentStroke)
+table(schorzenia_serca$Education)
+table(schorzenia_serca$Education, useNA = "always")
+```
+Co daje nam proste zestawienia z liczebnościami wskazanych wartości.
+
+Możemy też podawać kilka kolumn i uzyskamy analizę występowania poszczególnych
+kombinacji wartości.
+```{r}
+table(schorzenia_serca$Education, schorzenia_serca$Gender)
+```
+
+```{r}
+table(schorzenia_serca$Education, schorzenia_serca$Gender, schorzenia_serca$PrevalentHyp)
+```
+
+Powiedzmy, że informacja o wieku była zbierana 2 lata wcześniej niż część 
+istotnych danych i potrzebujemy wartości wieku zaktualizować. Możemy dodać do
+wszystkich wartości stałą wartość i nadpisać całą kolumnę danych.
+
+```{r}
+schorzenia_serca$Age[1:10]
+```
+
+```{r}
+schorzenia_serca$Age <- schorzenia_serca$Age + 2
+schorzenia_serca$Age[1:10]
+```
+
+
+Możemy wprowadzić kolejne kolumny przez wykonywanie obliczeń na całych kolumnach np.
+```{r}
+schorzenia_serca[,"AgeGroup"] <- floor(schorzenia_serca$Age/10)*10
+schorzenia_serca$AgeGroup <- as.integer(schorzenia_serca$AgeGroup)
+schorzenia_serca[1:5,]
+```
+
+Jeśli chcemy możemy też zmienić typ danych (w tym wypadku nie dokonujemy nadpisania)
+```{r}
+as.character(schorzenia_serca$AgeGroup[1:10])
+as.factor(schorzenia_serca$AgeGroup)[1:10]
+```
+
+Dzięki takiemu przekształceniu możemy poznać liczebności dla grup wiekowych
+```{r}
+table(schorzenia_serca$AgeGroup)
+```
+
+
+## Podstawowe filtrowanie danych i indeksowanie tabeli danych
+
+Przy nazwie tabeli możemy wpisać w nawiasach `[]` indeksy wierszy i kolumn,
+które pomogą nam wybrać odpowiednie wartości z tabeli, np.
+
+```{r}
+schorzenia_serca[5,3]
+```
+jest to element tabeli w 5 wierszu i 3 kolumnie.
+
+w miejscu indeksu kolumny możemy podać jej nazwę w cudzysłowie `""`
+
+```{r}
+schorzenia_serca[5,"Education"]
+```
+
+
+Efekt funkcji `head` możemy też uzyskać inaczej - podając zakres wierszy
+wybierając wszystkie kolumny pozostawiając wartość wyboru kolumny jako pustą. 
+```{r}
+schorzenia_serca[1:4,]
+```
+
+Lub tylko z wybranej kolumny
+```{r}
+schorzenia_serca[1:4,"Education"]
+```
+
+Aby wyświetlić fragment tabeli z wybranymi kolumnami
+```{r}
+schorzenia_serca[1:10, c("Gender","Age","Education") ]
+```
+Możemy zmieniać ich kolejność
+```{r}
+schorzenia_serca[1:6, c("Gender","Education","Age") ]
+```
+
+I oczywiście zostawiając wolne miejsce przed przecinkiem wybrać całe kolumny
+```{r}
+schorzenia_serca[ , c("Gender","Education","Age") ]
+```
+
+
+Można też korzystać w wyrażenia logicznego, które generuje wektor wartości 
+logicznych odpowiedniej długości.
+```{r max.print=20}
+schorzenia_serca$Gender=="Female"
+```
+
+Gdy takie wyrażenie wpiszemy zamiast indeksu wierszy, zostaną wybrane wiersze,
+gdzie wskazany warunek jest spełniony (prawdziwy).
+Wybierzmy wszystkie wiersze dotyczące kobiet.
+```{r}
+schorzenia_serca[schorzenia_serca$Gender=="Female", c("Gender","Age","Education") ]
+```
+
+Możemy tworzyć bardziej złożone warunki wyboru
+```{r}
+wyksztalconeKobiety <- schorzenia_serca[(schorzenia_serca$Gender=="Female" & schorzenia_serca$Education=="graduate"),
+                      c("Gender","Age","Education","PrevalentStroke") ]
+wyksztalconeKobiety
+```
+
+Taką tabelę możemy zapisać do pliku CSV lub arkusza kalkulacyjnego
+```{r}
+write.csv(wyksztalconeKobiety, "wyksztalconeKobiety.csv") #mozna podać pełną ścieżkę do pliku
+write.xlsx(wyksztalconeKobiety, "wyksztalconeKobiety.xlsx")
+```
+
+
+Możliwe spójniki i modyfikatory logiczne
+```{r}
+TRUE & TRUE
+TRUE & FALSE
+FALSE & TRUE
+FALSE & FALSE
+```
+```{r}
+TRUE | TRUE
+TRUE | FALSE
+FALSE | TRUE
+FALSE | FALSE
+```
+
+```{r}
+!TRUE
+!FALSE
+
+```
+
+Możemy dostrzec tutaj brakujące dane (`NA`).
+```{r}
+schorzenia_serca[45:78,]
+```
+
+
+Aby wskazać wiersze które mają 
+w określonej kolumnie brakujące wartości skorzystamy z funkcji `is.na`
+
+```{r}
+schorzenia_serca[is.na(schorzenia_serca$Education),]
+```
+
+Żeby sprawdzić ile jest takich przypadków możemy wykonać wykonać polecenia
+```{r}
+nrow(schorzenia_serca[is.na(schorzenia_serca$Education),]) 
+sum(is.na(schorzenia_serca$Education))
+```
+sumuje się wartości `TRUE` reprezentowane jako `1`
+
+Proste usunięcie wierszy z wartościami brakującymi możemy wykonać następująco
+```{r}
+wszyscyZedukacją <- schorzenia_serca[!is.na(schorzenia_serca$Education),]
+wszyscyZedukacją
+```
+Wykrzyknik zaprzeczenie wyrażenia logicznego
+
+Możemy też przypisać 1 konkretną wartość do wybranych elementów tabeli
+```{r}
+schorzenia_serca$CigsPerDay[is.na(schorzenia_serca$CigsPerDay)] <- 0
+```
+
+# Zadania
+
+1. Dodaj nowe kolumny do ramki (tabeli) danych zawierające informacje na temat 
+ * kategorii pulsu serca (szerokość przedziału 10), 
+ * poziomu glukozy (szerokość przedziału 10), 
+ * i BMI (szerokość przedziału 5).
+ (Patrz przykład z grupami wiekowymi)
+
+2. W zbiorze danych dotyczących schorzeń serc dokonaj zestawień (polecenie `table`) 
+poziomu wykształcenia, płci, palących (currentSmoker), klasy pulsu serca, 
+klasy wieku względem wystąpienia  cukrzycy (diabetes)
+
+3. Uzupełnij w dowolny sposób wszystkie brakujące wartości i wykonaj ponownie zestawienia
+
+4. Wczytaj zbiór resortworldwide
+
+5. Sprawdź wszystkie zmienne i wygeneruj statystyki opisowe
+
+6. Uzupełnij ewentualne brakujące dane
+
+7. Przygotuj kilka zestawień liczebności (przede wszystkim kraj, względem rozmiaru i oceny)
+
+8. Odfiltruj wszystkie resorty z Europy i zapisz je do pliku
+
+
