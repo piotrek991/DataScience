@@ -57,7 +57,7 @@ użytkowników możliwe jest wczytywanie plików za pomocą środowiska Rstudio 
 `Environment` (domyślnie usytuowanego z prawej u góry).
 
 ```{r}
-schorzenia_serca <- read.csv("heart_disease.csv")
+schorzenia_serca <- read.csv("heart_disease.csv",)
 # to jest komentarz, ignorowany przez interpreter
 ```
 
@@ -518,5 +518,21 @@ klasy wieku względem wystąpienia  cukrzycy (diabetes)
 7. Przygotuj kilka zestawień liczebności (przede wszystkim kraj, względem rozmiaru i oceny)
 
 8. Odfiltruj wszystkie resorty z Europy i zapisz je do pliku
+```{r}
+heart_disease[,"AgeGroup"] <- floor(heart_disease$age/10)*10
+heart_disease[,"GlucoseGroup"] <- floor(heart_disease$glucose/10)*10
+heart_disease[,"BMIGroup"] <- floor(heart_disease$BMI/5)*5
+```
+```{r}
+table(heart_disease$Gender,heart_disease$currentSmoker,heart_disease$heart_r_group,heart_disease$diabetes)
+```
+
+```{r}
+restworldwide <- read.csv('resortworldwide.csv', header=TRUE)
+summary(restworldwide)
+```
+```{r}
+restworldwide[is.na]
+```
 
 
