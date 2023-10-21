@@ -1,0 +1,409 @@
+---
+title: "Język R jako narzędzie wizualizacji i raportowania - zajęcia 2"
+author: "Marcin Koźniewski"
+output:
+  html_document:
+    df_print: paged
+  html_notebook:
+    df_print: paged
+editor_options:
+  markdown:
+    wrap: 72
+---
+
+# Zajęcia 2
+
+ - o datach
+ - trochę więcej o czyszczeniu danych
+ - wstęp do przetwarzania danych z `dplyr`
+
+## Krótko o notesach R
+
+Między R Notebook i R Markdown istnieje niewielka różnica w przetwrzaniu
+kod. Sam format jest podobny - wykorzystuje się Markdown. Ciekawą
+możliwością jest ustawianie edytora na tryb **Visual**. Pozwala to na
+uzyskanie podobnego notatnika do yupytera znanego nam dobrze do
+konstruowania notatników z kodem w języku Python.
+
+Same notesy z fragmentami kodu stanowią świetną metodę przygotowywania
+raportów, o ile działa ich budowanie (kniting).
+
+Każdy fragment kodu ma swoje opcje, które można przejrzeć klikając w
+zębatkę. Na przykład można dostosować roazmiar wyjściowego obrazu, czy
+ustalić widoczność informacji wyjściowych danego kodu.
+
+Nowe fragmenty kodu dodajemy przez kombinację klawiszy `Ctrl+Alt+i` lub
+klikając ikonę (+c) z prawej strony u góry panelu wprowadzania tekstu.
+Kod uruchamiamy zieloną strzałką lub jeśli mamy w nim ustawiony kursor -
+`Ctrl+Shift+Enter`. Możemy też zaznaczyć kawałek kodu i wybrać
+kombinację `Ctrl+Enter`.
+
+## Daty
+
+Data jest kolejnym typem danych
+
+```{r}
+jakisdzien <- as.Date("2000-01-01")
+jakisdzien
+```
+
+Daty można odejmować
+
+```{r}
+innydzien <- as.Date("2023-03-04")
+innydzien-jakisdzien
+```
+
+```{r}
+(innydzien-jakisdzien) /30
+```
+
+Wydobycie informacji o poszczególnych polach dat
+
+```{r}
+library(lubridate)
+month(jakisdzien)
+day(innydzien)
+year(innydzien)
+```
+
+Można te funkcje/operacje stosować na całych wektorach lub kolumnach
+danych (tworzymy tutaj taki wektor danych za pomocą `c()`)
+
+```{r}
+
+month(c(jakisdzien, innydzien))
+```
+
+Odczyt różnych formatów dat z ciągów znaków za pomocą funkcji konstruowanych ze 
+liter
+
+-   y - rok
+-   m - month
+-   d - day
+
+i ewentualnie liter `h`, `m` i `s` dla godzin, minut i sekund. Poszczególne 
+wartości przedzielone różnymi wartościami.
+
+```{r}
+ymd("2000-03-02")
+mdy("05-01-2020")
+dmy("20/2/2012")
+dmy("20.2.2012")
+ymd_hm("20.12.02 10:30")
+```
+
+## Wczytanie danych zawiiarających daty z pliku
+
+Wczytajmy bezpośrednio dane, które jako jedną z kolumn posiadają kolumnę z datami.
+
+```{r}
+wczytane_bezarg <- read.csv("kalimati_tarkari_dataset.csv")
+head(wczytane_bezarg)
+```
+
+Wczytane niewłaściwie (na moim komputerze występuje jako `factor`). Trzeba 
+będzie wydobyć datę lub wczytać jeszcze raz z definicją kolumn.
+Wypiszmy porcję danych z tej kolumny (przedział indeksów dobrany by
+zaobserwować dwie różne wartości)
+
+```{r}
+wczytane_bezarg$Date[60:80]
+```
+
+Zamiana na datę (wyświetla nam się w tym samym formacie)
+
+```{r}
+ymd(wczytane_bezarg$Date[60:80])
+```
+
+Zapiszmy daty jako nową kolumnę
+
+```{r}
+wczytane_bezarg[,"datadate"] <- ymd(wczytane_bezarg$Date)
+head(wczytane_bezarg)
+```
+
+Dopilnowanie typu daty może stać się istotne przy generowaniu wykresów.
+
+Wydobywanie informacji z daty na ciągu znaków też działa 
+(ale nie musi działać przy każdym formacie)
+
+```{r}
+year(wczytane_bezarg$Date) #wywołane na wektorze danych
+```
+
+Wcześniej nie pokazałem jak wczytywać dane ze zdefiniowanymi typami.
+Należy podać parametr `colClasses`. Czasami daty nie wczytują się prawidłowo, 
+dlatego dobrze jest znać pokazane wcześniej funkcje.
+
+```{r}
+kalimati <- read.csv("kalimati_tarkari_dataset.csv", 
+                        colClasses = c("integer","character","Date","character",
+                                           "numeric","numeric","numeric"))
+head(kalimati)
+```
+
+```{r}
+summary(kalimati)
+```
+
+## Narzędzia do agregacji i przetwarzania - dplyr
+
+### Podstawowe operacje dplyr
+
+`dplyr` operuje na nieco innej strukturze danych niż `data.frame`.
+`dplyr` wykorzystuje strukturę `tibble`. Nie ma to większego znaczenia,
+dopóki się nie wchodzi w szczegóły. Jeśli są problemy i musimy
+koniecznie zamienić na `data.frame`, zawsze możemy zastosować funkcję
+`as.data.frame`.
+
+```{r}
+library(dplyr)
+
+tibble(kalimati)
+```
+
+Ciekawą zaletą wielu bibliotek R jest możliwość budowania całych potoków
+przetwarzania danych. Polega to na tym, że to co produkuje jedna
+operacja jest przekazywane do kolejnej operacji jako pierwszy argument
+(w nawiasie okrągłym przed pierwszym przecinkiem). Poniżej będzie to
+widoczne w przykładach. Do łączenia operacji wykorzystuje się operator
+`%>%`.
+
+`dplyr` pozwala na wywoływanie podobnych operacji jak te znane z SQL.
+
+Jeśli zbiór danych jest zbyt rozbudowany by przeprowadzać jakąś analizę
+chcemy wyodrębnić istotne w pewnym celu informacje. Aby wybrać kilka
+kolumn używamy polecenia `select`. W nawiasach wymieniamy wybierane kolumny.
+Co ważne nie piszemy ich w cudzysłowie.
+
+```{r}
+kalimati %>% select(Commodity, Date, Average)
+```
+
+Wykonuje to samo co
+
+```{r}
+select(kalimati, Commodity, Date, Average)
+```
+
+
+wybór wierszy realizuje się za pomocą `filter`
+
+```{r}
+kalimati %>% select(Commodity, Date, Average) %>% 
+             filter(Date>=ymd("2015-01-01"))
+```
+
+jest tym samym co
+
+```{r}
+filter(select(kalimati, Commodity, Date, Average), Date>=ymd("2015-01-01"))
+```
+
+
+Jeśli chcemy się pozbyć tylko kilku kolumn to możemy użyć `!` lub `-`
+
+```{r}
+kalimati %>% select(-Unit) %>% 
+             filter(Date>=ymd("2015-01-01"))
+```
+
+Pomijamy więcej kolumn i dodatkowo wyfiltrowujemy dobro
+
+```{r}
+kalimati %>% select(-c(Unit, Average)) %>% 
+             filter(Date>=ymd("2015-01-01") & Commodity=="Potato White")
+```
+
+Wybierzmy więcej dóbr Sprawdźmy najpierw co mamy dostępne
+
+```{r}
+unique(kalimati$Commodity)
+```
+
+Ceny są podawane za odpowiednią ilość danego dobra
+
+```{r}
+unique(kalimati$Unit)
+```
+
+```{r}
+kalimati %>% select(Unit) %>% distinct()
+```
+
+
+```{r}
+table(kalimati$Unit)
+```
+
+
+```{r}
+kalimati %>% select(Unit) %>% group_by(Unit) %>% summarise(count= n())
+```
+
+
+Aby wybrać kilka produktów posłużymy się operatorem `%in%` określającym
+wartość logiczną przynależności do zbioru.
+
+```{r}
+
+kalimati %>% select(-c(Unit, Average)) %>% 
+             filter(Commodity %in% c("Kiwi", "Lime", "Lemon", "Cabbage"))
+
+```
+
+Możemy dane sortować za pomocą `arrange`
+
+```{r}
+
+kalimati %>% select(-c(Unit, Average)) %>% 
+             filter(Commodity %in% c("Kiwi", "Lime", "Lemon", "Cabbage"), 
+                    Date>=as.Date("2020-01-01")) %>%
+             arrange(Date)
+
+```
+
+Jak widać niekażdy produkt jest opisany na pełnym przedziale czasu.
+
+```{r}
+min(kalimati$Date)
+max(kalimati$Date)
+range(kalimati$Date)
+```
+
+
+Chcemy malejąco? Używamy `desc`
+
+```{r}
+
+kalimati %>% select(-c(Unit, Average)) %>% 
+             filter(Commodity %in% c("Kiwi", "Lime", "Lemon", "Cabbage"), 
+                    Date<as.Date("2020-01-01")) %>%
+             arrange(desc(Date))
+
+```
+
+### Grupowanie i funkcje agregujące
+
+Chcemy się dowiedzieć czegoś na temat poszcególnych dóbr.
+Zagregujmy informacje podając maksymalną i minimalną wartość dla dwóch kolumn
+
+```{r}
+
+kalimati %>% filter(Commodity == "Kiwi") %>%
+             summarise(minofmin = min(Minimum),
+                       maxofmax = max(Maximum))
+
+```
+
+Funkcje do wykorzystania w `summarize` (lub `summarise`)
+
+ - mean(), median() 
+ - sd(), IQR(), mad() (odchylenie standardowe, przedział między kwartylami)
+ - min(), max(), quantile() 
+ - first(), last(), nth(), (gdy mamy odpowiednio uporządkowane dane)
+ - n(), n_distinct() (zliczanie wartości w kolumnie)
+
+Dodając grupowanie mamy dla każdego produktu.
+
+```{r}
+kalimati %>% 
+             filter(Commodity %in% c("Kiwi","Lime","Lemon")) %>%
+             group_by(Commodity) %>%
+             summarise(minofmin = min(Minimum),
+                       maxofmax = max(Maximum))
+
+```
+
+```{r}
+kalimati %>% 
+             filter(Commodity %in% c("Kiwi","Lime","Lemon")) %>%
+             group_by(Commodity) %>%
+             summarise(min   = min(Minimum),
+                       max   = max(Maximum),
+                       begin = min(Date),
+                       end   = max(Date),
+                       avg   = mean(Average)) 
+
+```
+
+dodawanie kolumn w locie `mutate`
+
+```{r}
+
+
+kalimati %>% 
+             filter(Commodity %in% c("Kiwi","Lime","Lemon")) %>%
+             mutate(year=year(Date)) %>%
+             group_by(Commodity, year) %>%
+             summarise(min   = min(Minimum),
+                       max   = max(Maximum),
+                       begin = min(Date),
+                       end   = max(Date),
+                       avg   = mean(Average)) 
+
+```
+
+# Zadania
+
+1.  Proszę wybrać wiersze dotyczące poniższych dóbr: "Tomato Big(Nepali)",
+    "Tomato Small(Local)","Potato Red","Potato White",
+    "Onion Dry (Indian)"
+```{r}
+ kalimati %>% filter(Commodity %in% c('Tomato Small(Local)','Tomato Small(Local)','Potato Red','Potato White'))
+```
+    
+2.  Za pomocą dplyr wypisz nazwy wszystkich dóbr, ale wypisując je w
+    jednej kolumnie. (Należy użyć `distinct`, którego nie opisałem wyżej)
+```{r}
+kalimati %>% select(Commodity) %>% distinct()
+```
+  
+3.  Dla danych z pierwszego zadania podaj Maksymalne i minimalne ceny z
+    całego okresu.
+```{r}
+ kalimati %>% filter(Commodity %in% c('Tomato Small(Local)','Tomato Small(Local)','Potato Red','Potato White')) %>%
+          summarise(minofall = min(Minimum)
+                    ,maxofall = max(Maximum))
+```
+  
+4.  Jak te statystyki wyglądają dla roku 2020? Jak to wygląda w
+    poszczególnych miesiącach tego roku?
+```{r}
+kalimati %>% filter(Commodity %in% c('Tomato Small(Local)','Tomato Small(Local)','Potato Red','Potato White'), year(Date) == 2020) %>% group_by(year(Date),month(Date)) %>%
+          summarise(minof2020 = min(Minimum),
+                       maxof2020 = max(Maximum))
+```
+    
+5.  Jak te statystyki wyglądają dla poszczególnych lat?
+```{r}
+
+kalimati %>%
+          group_by(year(Date)) %>%
+          summarise(minof = min(Minimum),
+                       maxof = max(Maximum))
+```
+
+6.  Dokonaj podobnych analiz dla innej grupy produktów.
+```{r}
+# Onion Dry (Indian)				
+# Carrot(Local)				
+# Cabbage(Local)
+
+group2 <- kalimati %>% filter(Commodity %in% c('Onion Dry (Indian)','Carrot(Local)','Cabbage(Local)'))
+
+minmax_group2 <- group2 %>% summarise(minofall = min(Minimum),maxofall = max(Maximum))
+
+year2020_group2 <- group2 %>% filter(year(Date) == 2020) %>% group_by(year(Date),month(Date)) %>%
+                   summarise(minof2020 = min(Minimum),
+                   maxof2020 = max(Maximum))
+
+years_group2 <- group2 %>% group_by(year(Date)) %>%
+                      summarise(minof = min(Minimum),
+                                maxof = max(Maximum))
+
+years_group2
+
+```
