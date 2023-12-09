@@ -1,0 +1,21 @@
+PassengerId,Name,Fare,Expensive_ticket
+259,"Ward, Miss. Anna",512.3292,True
+738,"Lesurer, Mr. Gustave J",512.3292,True
+680,"Cardeza, Mr. Thomas Drake Martinez",512.3292,True
+89,"Fortune, Miss. Mabel Helen",263.0,True
+28,"Fortune, Mr. Charles Alexander",263.0,True
+342,"Fortune, Miss. Alice Elizabeth",263.0,True
+439,"Fortune, Mr. Mark",263.0,True
+312,"Ryerson, Miss. Emily Borie",262.375,True
+743,"Ryerson, Miss. Susan Parker ""Suzette""",262.375,True
+119,"Baxter, Mr. Quigg Edmond",247.5208,True
+300,"Baxter, Mrs. James (Helene DeLaudeniere Chaput)",247.5208,True
+558,"Robbins, Mr. Victor",227.525,True
+701,"Astor, Mrs. John Jacob (Madeleine Talmadge Force)",227.525,True
+381,"Bidois, Miss. Rosalie",227.525,True
+717,"Endres, Miss. Caroline Louise",227.525,True
+528,"Farthing, Mr. John",221.7792,True
+378,"Widener, Mr. Harry Elkins",211.5,True
+731,"Allen, Miss. Elisabeth Walton",211.3375,True
+780,"Robert, Mrs. Edward Scott (Elisabeth Walton McMillan)",211.3375,True
+690,"Madill, Miss. Georgette Alexandra",211.3375,True
