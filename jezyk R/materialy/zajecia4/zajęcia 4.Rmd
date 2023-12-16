@@ -156,6 +156,7 @@ szablonu zamieszczonego powyżej. Dla przypomnienia
 
 ```{r}
 woj.dane <- merge(x=woj, y=zd, by.x="jpt_nazwa_", by.y="nazwawoj")
+woj.dane
 ```
 
 
