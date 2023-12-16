@@ -1,0 +1,305 @@
+---
+title: "Język R jako narzędzie wizualizacji i raportowania - zajęcia 3"
+author: "Marcin Koźniewski"
+output:
+  html_document:
+    df_print: paged
+  html_notebook:
+    df_print: paged
+editor_options:
+  markdown:
+    wrap: 72
+---
+
+# Zajęcia 3
+
+### Wizualizacja i biblioteka ggplot2
+
+-   proste formy wizualizacji i przedstawiania danych
+-   ustawianie podstawowych cech wykresów
+-   źródła cech wykresu: stałe i zależne od danych
+-   podwykresy
+
+## graphics
+
+W R wizualizować można za pomocą prostych funkcji takich jak `hist`, `plot`, 
+`lines`, `boxplot`, `pairs`. Stanowią one wbudowane narzędzia do wizualizacji. 
+Biblioteka ggplot2 stanowi rozbudowane i uporządkowane narzędzie, które pozwala 
+na schludną i przyjemną dla oka wizualizację. Istnieje wiele rozszerzeń, 
+które sprawiają, że R z innymi bibliotekami do przetwarzania danych urasta do
+potężnego narzędzia do wizualizacji.
+
+Wczytajmy znane nam już dane
+```{r}
+schorzenia_serca <- read.csv("heart_disease.csv")
+head(schorzenia_serca)
+```
+
+Kilka prostych wizualizacji dla wektorów danych, które podajemy jako argumenty
+
+```{r}
+#plot(x,y)
+plot(schorzenia_serca$sysBP, schorzenia_serca$diaBP)
+```
+Kółeczka można zamienić na inne znaczki lub ustawić jako punkty lub nawet nadać 
+im przeźroczystość. Zmienić tytuł, podpisy pod osiami itd.
+
+```{r}
+#hist(x)
+hist(schorzenia_serca$age)
+```
+
+O ile wykresy punktowe i histogramy rozumiemy do pewnego stopnia intuicyjnie.
+Aby zastąpić podstawowy zestaw statystyk opisowych wykresem, możemy wykorzystać
+wykres pudełkowy, który wymaga wyjaśnienia (obrazek CEZ).
+
+Wykres pudełkowy przedstawia percentyle: 0-min, 25, 50-mediana, 75, 100-max.
+
+```{r}
+boxplot(schorzenia_serca$age)
+#boxplot(CO ~ PODZIAŁ_GRUPY, data=NASZE_DANE)
+boxplot(age ~ education, data=schorzenia_serca)
+```
+
+Szybki podgląd zależności w danych. (wybieram tylko część kolumn)
+
+```{r}
+
+pairs(schorzenia_serca[,c("age","sysBP","diaBP","BMI", "glucose")] )
+```
+
+## ggplot2
+
+```{r}
+library(ggplot2) #może wymagać instalacji
+```
+
+Zacznijmy od najprostszego wykresu
+
+```{r}
+#ggplot(RAMKA_DANYCH) + 
+#  geom_*(aes(x,y))
+
+ggplot(schorzenia_serca) + 
+  geom_point(aes(sysBP, diaBP))
+```
+
+Najpierw wskazujemy zbiór danych przekazywany do ggplot. Następnie nadajemy
+geometrię (w tym wypadku dane wyświetlamy jako punkty) wskazując, co mają
+reprezentować współrzędne - dane z których kolumn mają być zobrazowane. Proszę
+zwrócić uwagę, że piszemy nazwy kolumn bez cudzysłowów.
+
+Widzimy, że domyślnie wykres jest schludny i nie wygląda ubogo.
+Widzimy dokładne osie opisane nazwami kolumn z których pochodzą dane.
+Tło wykresu stanowi delikatne szare pole z zarysowanymi prowadnicami 
+na podziałkach osi. Wszystkie te elementy w łatwy sposób będzie można zmodyfikować
+"dodając" modyfikatory wykresu lub różne elementy.
+
+Zmodyfikujmy kolor wykresu. Do tego można stosować kodów szesnastkowych RGB lub
+prościej - predefiniowanych kolorów, które możemy poznać z użyciem funkcji
+`colors()`.
+
+
+```{r}
+#dodaliśmy parametr color do geom_point
+ggplot(schorzenia_serca) + 
+  geom_point(aes(sysBP, diaBP), color="blue")
+```
+Punktów jest bardzo dużo, więc możemy chcieć przytłumić intensywność koloru
+przez dodanie do każdego punktu przeźroczystości. Wyrysowanie punktu w tym 
+samym miejscu spowoduje intensyfikację koloru.
+
+```{r}
+#dodaliśmy parametr alpha do geom_point
+ggplot(schorzenia_serca) + 
+  geom_point(aes(sysBP, diaBP), color="blue", alpha=0.2)
+```
+
+Możemy też modyfikować inne parametry wyświetlanych punktów jak ich rozmiar.
+
+```{r}
+#dodaliśmy parametr size do geom_point
+ggplot(schorzenia_serca) + 
+  geom_point(aes(sysBP, diaBP), color="blue", alpha=0.2, size=1)
+```
+
+Zmodyfikujmy kolejne elementy wykresu: dodajmy tytuł. Jak to zrobić?
+Trzeba dodać funkcję `ggtitle()`.
+
+```{r}
+#dodaliśmy element ggtitle
+ggplot(schorzenia_serca) + 
+  geom_point(aes(sysBP, diaBP), color="blue", alpha=0.2, size=1) +
+  ggtitle("Blood pressure")
+```
+
+Chcemy zmienić etykiety osi? Proszę bardzo. `xlab()` i `ylab()`
+```{r}
+#dodaliśmy elementy xlab i ylab
+ggplot(schorzenia_serca) + 
+  geom_point(aes(sysBP, diaBP), color="blue", alpha=0.2, size=1) +
+  ggtitle("Blood pressure") +
+  xlab("Systolic (mm Hg)") +
+  ylab("Diastolic (mm Hg)")
+```
+
+Niektórzy nie lubią tego szarego tła. Zmieńmy zatem tło wykresu ustawiając
+odpowiedni theme, np. `theme_bw()`
+
+
+```{r}
+#dodaliśmy elementy xlab i ylab
+ggplot(schorzenia_serca) + 
+  geom_point(aes(sysBP, diaBP), color="blue", alpha=0.2, size=1) +
+  ggtitle("Blood pressure") +
+  xlab("Systolic (mm Hg)") +
+  ylab("Diastolic (mm Hg)") +
+  theme_bw()
+```
+
+Dlaczego arytmetyka wykresu jest użyteczna? Można zapisać wykres pod zmienną
+następnie go uzupełniać tworząc różne warianty tego samego wykresu. Programiści
+lubią takie możliwości "dekorowania" wykresu. Te same dane możemy w różny sposób
+wyrysowywać ale też możemy przekształcać samą geometrię lub dodawać kolejne 
+wyświetlane elementy.
+
+```{r}
+#dodaliśmy elementy xlab i ylab
+ggplot(schorzenia_serca) + 
+  geom_point(aes(sysBP, diaBP), color="blue", alpha=0.2, size=1) +
+  ggtitle("Blood pressure") +
+  xlab("Systolic (mm Hg)") +
+  ylab("Diastolic (mm Hg)") +
+  theme_bw() +
+  geom_smooth(aes(sysBP, diaBP)) # dodaliśmy linię aproksymacji (wygładzającą)
+```
+
+Takich elementów geometrii możemy dodawać więcej.
+
+Chcemy jednak aby nasze wykresy prezentowały więcej informacji niż tylko 
+dwie kolumny. W poszukiwaniu zależności związanych z wartościami dyskretnymi
+chcemy rozróżniać różne klasy obiektów na wykresie np. przez zakolorowanie 
+ich w inny sposób.
+
+Do tego celu stosujemy dodajemy to co ma być zależne w prezentacji danych
+do parametru `mapping` - mapowania tworzonego za pomocą funkcji `aes()`
+
+Sprawdźmy osoby, które miały atak serca
+
+```{r}
+ggplot(schorzenia_serca) + 
+  geom_point(aes(x=sysBP, y=diaBP, color=Heart_.stroke),alpha=0.3, size=1) + #w tej linii!
+  ggtitle("Blood pressure") +
+  xlab("Systolic (mm Hg)") +
+  ylab("Diastolic (mm Hg)") +
+  theme_bw() 
+```
+
+PROSZĘ ZWRÓCIĆ UWAGĘ NA BRAK PARAMETRU `color` NA ZEWNĄTRZ `aes` !!!
+
+Kilka przykładów.
+
+```{r}
+ggplot(schorzenia_serca) + 
+  geom_point(aes(x=sysBP, y=diaBP, color=Gender),alpha=0.3, size=1) + #w tej linii!
+  ggtitle("Blood pressure") +
+  xlab("Systolic (mm Hg)") +
+  ylab("Diastolic (mm Hg)") +
+  theme_bw() 
+```
+
+```{r}
+ggplot(schorzenia_serca) + 
+  geom_point(aes(x=sysBP, y=diaBP, color=education),alpha=0.5, size=1) + #w tej linii!
+  ggtitle("Blood pressure") +
+  xlab("Systolic (mm Hg)") +
+  ylab("Diastolic (mm Hg)") +
+  theme_bw() 
+```
+(Eh tutaj nic nie widać...)
+
+To samo możemy zrobić z rozmiarem punktów (im większa kropka tym większa wartość
+w zadanej kolumnie), ich przeźroczystością (alpha).
+
+## Inne wykresy niż punktowe
+
+```{r}
+ggplot(schorzenia_serca) + 
+  geom_histogram(aes(x=age)) + 
+  theme_bw() 
+```
+
+
+```{r}
+ggplot(schorzenia_serca) + 
+  geom_histogram(aes(x=age, color=Gender)) + 
+  theme_bw() 
+```
+
+```{r}
+ggplot(schorzenia_serca) + 
+  geom_histogram(aes(x=age, fill=Gender)) + 
+  theme_bw() 
+```
+
+słupki są jeden na drugim. Zróbmy by były obok siebie.
+
+```{r}
+ggplot(schorzenia_serca) + 
+  geom_histogram(aes(x=age, fill=Gender), position="dodge") + #pozycja obok siebie
+  theme_bw() 
+```
+
+
+Te kolory mogą być trudne w odbiorze. Do zmiany kolorystyki poszczególnych grup
+wykorzystujemy rodzinę funkcji scale_
+
+```{r}
+ggplot(schorzenia_serca) + 
+  geom_histogram(aes(x=age, fill=Gender), position="dodge") + 
+  theme_bw() +
+  scale_fill_manual(values=c("darkgreen","darkblue"))
+```
+
+
+Dla niektórych rozróżnianie tylko dwóch klas to może być za mało. Zatem podzielmy
+wykres na podwykresy gdzie będziemy mieli różne podgrupy.
+
+```{r}
+ggplot(schorzenia_serca) + 
+  geom_histogram(aes(x=age, fill=Gender), position="dodge") + 
+  theme_bw() +
+  scale_fill_manual(values=c("darkgreen","darkblue")) +
+  facet_grid(~education)
+```
+
+
+```{r}
+ggplot(schorzenia_serca) + 
+  geom_histogram(aes(x=age, fill=Gender), position="dodge") + 
+  theme_bw() +
+  scale_fill_manual(values=c("darkgreen","darkblue")) +
+  facet_grid(education~.) #potrzebna jest kropka
+```
+
+
+wykres jest za niski. Notatnik pozwala na dostosowanie wysokości obrazka
+
+```{r fig.height=7, fig.width=7}
+ggplot(schorzenia_serca) + 
+  geom_histogram(aes(x=age, fill=Gender), position="dodge") + 
+  theme_bw() +
+  scale_fill_manual(values=c("darkgreen","darkblue")) +
+  facet_grid(education~.) #potrzebna jest kropka
+```
+
+# dplyr + ggplot2
+
+demo na żywo :-)
+
+Zbuduję wykres poprzedzony.
+
+# Zadanie
+
+Wykorzystać dowolny inny zbiór danych i utworzyć wykres z dostosowanymi 
+ustawieniami.
