@@ -1,0 +1,210 @@
+---
+title: "Zajęcia 4"
+output: html_notebook
+---
+
+# Zajęcia 4 
+
+Dzisiejsze zajęcia poprowadzimy w trybie warsztatowym. Postaramy się wybrane 
+dane publiczne.
+
+Proszę pobrać dane geoprzestrzenne nt. województw dostępne pod linkiem:
+
+[envirosolutions.pl - otwarte dane GIS](https://www.envirosolutions.pl/otwarte-dane.html)
+
+Można skopiować i wkleić link:
+
+https://www.envirosolutions.pl/otwarte-dane.html
+
+proszę te dane wypakować w folderze z plikiem notatnika R.
+
+Wczytajmy te dane z pomocą biblioteki sf wskazując plik wojewodztwa.shp.
+Pozostałe pliki są niezbędne, ale bezpośrednio nie są wskazywane przy otwieraniu.
+
+```{r}
+library(sf)
+#woj <- st_read("C:/Users/student/Desktop/zajeciaR/wojewodztwa.shp")
+wojewodztwa <- st_read("wojewodztwa.shp")
+```
+
+Co nam się wczytało do obiektu sf:
+```{r}
+wojewodztwa
+```
+
+Jak widzmy zawiera dane związane z obrysami województw. Szczególną uwagę proszę
+poświęcić na ostatnią kolumnę "geometry" - jest to specjalna kolumna w danych
+geoprzestrzennych mówiąza o położeniu i kształcie opisywanego w jednym wierszu
+obiektu. "MULTIPOLIGON" oznacza, że każde województwo jest opisane kilkoma (lub jednym)
+wielokątem. Drugą kolumną, na którą należy zwrócić uwagę, jest kolumna 
+"jpt_nazwa_". Do jednej i do drugiej kolumny możemy się odwoływać przez `$`
+
+dla uproszczenia wybierzmy tylko te kolumny, ponieważ tylko one nam będą potrzebne.
+
+```{r}
+woj <- wojewodztwa[,c("jpt_nazwa_", "geometry")]
+```
+
+
+```{r}
+woj$jpt_nazwa_
+```
+
+W prosty sposób wyrysujmy geometrie
+
+```{r}
+plot(woj[,"geometry"])
+```
+
+Ggplot2 pomaga nam ładniej wyrysować granice.
+
+```{r}
+library(ggplot2)
+ggplot(woj) + #nowy wykres i na których danych bazujemy
+  geom_sf() # dodanie geometrii to wykresu
+```
+
+Do prostywych wizualizacji danych nie będziemy potrzebować siatki i podziałki.
+
+```{r}
+ggplot(woj) +
+  geom_sf() +
+  theme_void() #upraszczamy wygląd
+```
+
+## Od tego miejsca zaczyna się przygotowanie pobranych danych do wizualizacji
+
+Skoro już mamy kształwy województw, pozyskajmy jakieś dane, które są zagregowane 
+po województwach.
+
+Zdarzenia w ruchu drogowym w 2022 z podziałem na województwa
+
+[dane.gov.pl - zdarzenia w ruchu drogowym 2022](https://dane.gov.pl/en/dataset/834,zdarzenia-w-ruchu-drogowym/resource/47302/table)
+
+Można skopiować i wkleić link:
+
+https://dane.gov.pl/en/dataset/834,zdarzenia-w-ruchu-drogowym/resource/47302/table
+
+Za pomocą interfejsu Rstudio "Import Dataset" możemy właściwie wczytać dane. (demo)
+W przypadku problemów ustawić kodowanie na (locale -> encoding) na
+"windows-1250"
+
+Poniżej wygenerowana przy tej okazji instrukcja wczytywania pobranych danych
+(działa u mnie lokalnie, proszę importować za pomocą interfejsu Rstudio)
+
+```{r}
+library(readr)
+zd <- read_delim("Zdarzenia_w_ruchu_drogowym_w_2022_r._-_podział_na_województwa.csv", 
+     delim = ";", escape_double = FALSE, locale = locale(encoding = "windows-1250"), 
+     trim_ws = TRUE, skip = 3)
+```
+
+```{r}
+zd
+```
+
+Widzimy, że tabela posiada kolumnę województwo, którą trzeba dostosować
+do danych o kształtach (pozbyć się pierwszych 5 znaków "WOJ. " i zamienić na
+małe litery). S pomocą przychodzą nam narzędzia z modułu bazowego R i "stringi".
+
+```{r}
+zd$Województwo
+```
+
+```{r}
+library(stringi)
+stri_sub(zd$Województwo, from = 6)
+```
+
+zapisujemy to do nowej kolumny "NAZWAWOJ"
+```{r}
+zd[,"NAZWAWOJ"] <- stri_sub(zd$Województwo, from = 6)
+```
+
+```{r}
+zd
+```
+
+Zamieniamy na małe litery
+```{r}
+tolower(zd$NAZWAWOJ)
+```
+
+zapisujemy do kolumny "nazwawoj"
+```{r}
+zd[,"nazwawoj"] <- tolower(zd$NAZWAWOJ)
+```
+
+Trzeba połączyć ramkę danych (podobnie jak się łączy tabele w SQL) z informacjami
+o geometrii województw za pomoca merge
+
+Parametry:
+pierwsza ramka danych
+druga ramka danych
+którą kolumnę wykorzystujemy do łączenia z pierwszej ramki
+którą kolumnę wykorzystujemy do łączenia z drugiej ramki
+
+```{r}
+merge(x=woj, y=zd, by.x="jpt_nazwa_", by.y="nazwawoj")
+```
+
+Zweryfikujmy krótko powstałą ramkę danych. Czy właściwe wartości w kolumnie
+"jpt_nazwa_" odpowiadają właściwym wartościom w kolumnie "Województwo".
+
+Zapiszmy wynik łączenia ramek i wykonajmy pierwszą wizualizację, korzystając już
+szablonu zamieszczonego powyżej. Dla przypomnienia
+
+```{r}
+woj.dane <- merge(x=woj, y=zd, by.x="jpt_nazwa_", by.y="nazwawoj")
+woj.dane
+```
+
+
+```{r}
+ggplot(woj.dane) +
+  geom_sf() +
+  theme_void()
+```
+
+Zróbmy zatem aby wypełnienie obszarów zależało od wartości w którejś z kolumn
+
+```{r}
+woj.dane$`Liczba Wypadkow`
+ggplot(woj.dane) +
+  geom_sf(aes(fill=`Liczba Wypadkow`)) +
+  theme_void()
+```
+
+```{r}
+woj.dane$`Liczba Wypadkow`
+ggplot(woj.dane) +
+  geom_sf(aes(fill=`Liczba Wypadkow`)) +
+  theme_void() +
+  ggtitle("Liczba wypadków drogowych z podziałem na województwa")
+```
+
+## Zadanie
+
+ Pobrać jeszcze inne dane z dane.gov.pl z podziałem na województwa, dokonać 
+ ich obróbki i wizualizacji w oparciu o geometrie wykorzystane powyżej.
+
+Można użyć wyszukiwarki i wpisać frazę "na województwa"
+```{r}
+library(readr)
+dane_rej <- read_delim('Pojazdy_wg_wojewodztw_2023.csv', delim=';', escape_double=FALSE, locale = locale(encoding = "windows-1250"), trim_ws=TRUE)
+```
+```{r}
+dane_rej <- dane_rej[,!names(dane_rej) %in% c("listopad","grudzień")]
+dane_rej$WOJEWÓDZTWO <- tolower(dane_rej$WOJEWÓDZTWO)
+
+dane_m <- merge(x=woj, y=dane_rej, by.x="jpt_nazwa_", by.y = "WOJEWÓDZTWO")
+dane_m
+```
+```{r}
+ggplot(dane_m) +
+  geom_sf(aes(fill=`styczeń`)) +
+  theme_void() +
+  ggtitle("Liczba rejestraji styczeń") +
+  labs(fill='Liczba rejestracji')
+```
+
