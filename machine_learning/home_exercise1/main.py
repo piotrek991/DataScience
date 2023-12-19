@@ -38,6 +38,7 @@ def calculate_knn(n_neigh: int, split: bool = False) -> pd.DataFrame:
         knn = KNeighborsClassifier(n_neighbors=i, metric='euclidean')
         knn.fit(x_train, y_train)
 
+        print(f"Calculating for n:{i}")
         rows_data = calculate_quality(knn,x_test,y_test,'KNN')
         rows_data = rows_data.assign(neigbours = i)
         final_df = pd.concat([final_df, rows_data]).reset_index(drop=True)
@@ -109,6 +110,7 @@ def calculate_quality(model, x_train, y_train, model_name):
 
     y_pred = model.predict(x_train)
     cm = metrics.confusion_matrix(y_train, y_pred)
+    print(f"CONFUSION MATRIX \n{cm}")
     r_dict = calculate_metrics(cm)
 
     TPR = r_dict['TP'] / (r_dict['TP'] + r_dict['FN'])  # czulosc
@@ -304,7 +306,7 @@ def process_all_data():
         leave_one_out_data.to_excel(writer, sheet_name='leave_one_out_data',index=False)
 
 
-print(leave_one_out_sec())
+print(calculate_knn(16))
 
 
 
