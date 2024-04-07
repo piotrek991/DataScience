@@ -1,0 +1,48 @@
+version: "3.9"
+services:
+
+  webserver:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: pd:latest
+    env_file:
+      - .env
+      - .env.local
+    ports:
+      - "8000:8000"
+    stdin_open: true
+    tty: true
+    volumes:
+      - .:/usr/src/app/
+      - ~/.aws/:/root/.aws:ro
+    command: bash -c "python /usr/src/app/pd_ds/manage.py runserver 0.0.0.0:8000"
+    links:
+      - postgres
+    depends_on:
+      - postgres
+    networks:
+      - pd_network
+
+  postgres:
+    hostname: "postgres"
+    image: "postgres:13.2"
+    environment:
+      - POSTGRES_DB=videotracker
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=pass
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - pd_network
+
+
+volumes:
+  pgdata:
+
+
+networks:
+  pd_network:
+    external: true
