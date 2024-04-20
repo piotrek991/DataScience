@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<ul>
+    {% for event in events %}
+    <li> {{ event.name }}</li>
+    <ul>
+        {% for author in event.authors.all %}
+        <li>{{ author }}</li>
+            <ul>
+            {% for book in author.book_set.all %}
+                 <li>{{ book.title }}</li>
+            {% endfor %}
+            </ul>
+        {% endfor %}
+    </ul>
+    {% endfor %}
+</ul>
+</body>
+</html>

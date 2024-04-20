@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+ {{form.errors}}
+ <form action=".", method="POST">{% csrf_token %}
+        <label for="title"></label>
+        <input type="text" name="title" id="title">
+     <br><br>
+        <label for="author"></label>
+      <select name="author" id="author">
+     {% for object in authors %}
+        <option value="{{ object.id }}">{{ object.name }}</option>
+     {% endfor %}
+      </select>
+     <br><br>
+        <label for="num_pages"></label>
+        <input type="number" name="num_pages" id="num_pages">
+     <br><br>
+        <label for="published_date"></label>
+        <input type="date" name="published_date" id="published_date">
+     <br><br>
+     <input type="checkbox" id="hard_cover" name="hard_cover">
+     <label for="hard_cover">hard cover</label>
+     <br><br>
+        <button type="submit" id="submit">Zatwierdź</button>
+    </form>
+</body>
+</html>
