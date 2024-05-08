@@ -303,3 +303,18 @@ Zbuduję wykres poprzedzony.
 
 Wykorzystać dowolny inny zbiór danych i utworzyć wykres z dostosowanymi 
 ustawieniami.
+```{r}
+example_data <- read.csv("kalimati_tarkari_dataset.csv")
+head(example_data)
+```
+```{r}
+ggplot(example_data[0:600,]) + 
+  geom_point(aes(Commodity, Minimum, color=Date), alpha=0.5, size=1) +
+  ggtitle('Tarkari dataset') + 
+  xlab('Commodity') + 
+  ylab('Minimum') + 
+  theme_bw() +
+  theme(axis.text=element_text(size=6)) +
+  scale_x_discrete(guide = guide_axis(angle = 90))
+```
+
