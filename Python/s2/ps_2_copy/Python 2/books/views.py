@@ -5,6 +5,11 @@ from django.views.generic.detail import DetailView
 from django.views.generic.list import ListView
 from django.views.generic.edit import CreateView
 from django.views.generic import TemplateView
+from django.views.generic.edit import DeleteView
+from django.views import View
+from django.http import HttpResponse, HttpResponseRedirect
+
+from django.urls import reverse_lazy
 
 # Create your views here.
 
@@ -38,4 +43,24 @@ class EventShow(TemplateView):
         data = super().get_context_data(**kwargs)
         data['events'] = Event.objects.filter(start_date__lte=timezone.now(), end_date__gte=timezone.now())
         return data
+
+
+class BookDelete(DeleteView):
+    model = Book
+    template_name = 'books/delete_book.html'
+    success_url = reverse_lazy("book-list")
+
+
+class BookDelete_OWN(View):
+    model = Book
+
+    def get(self, request, pk):
+        instance = Book.objects.filter(id = pk).first()
+        if instance:
+            instance.delete()
+            return HttpResponseRedirect(reverse_lazy("book-list"))
+        return HttpResponse("Object do not exists")
+
+
+
 

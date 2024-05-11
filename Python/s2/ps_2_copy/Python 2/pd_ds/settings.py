@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/3.2/ref/settings/
 """
 
 from pathlib import Path
+from celery.schedules import crontab
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -37,6 +38,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    "django_celery_results",
+    "django_celery_beat",
     'books',
 ]
 
@@ -124,3 +127,11 @@ STATIC_URL = '/static/'
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+CELERY_BROKER_URL = "amqp://guest:guest@rabbitmq:5672/"
+
+
+CELERY_BEAT_SCHEDULE = {
+"generate_reports_live": {
+"task": "pd_ds.celery.calculation",
+"schedule": crontab(), # Run daily at midnight
+},}

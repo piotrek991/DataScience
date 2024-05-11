@@ -30,6 +30,8 @@ class Event(models.Model):
     start_date = models.DateTimeField()
     end_date = models.DateTimeField()
     authors = models.ManyToManyField('books.Author')
+    active = models.BooleanField(default=False)
+
     def __str__(self):
         return self.name
 

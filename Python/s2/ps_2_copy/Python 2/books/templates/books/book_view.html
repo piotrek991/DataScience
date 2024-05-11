@@ -13,7 +13,8 @@
     <li>{{ object.num_pages }}</li>
     <li>{{ object.published_date }}</li>
     <li>{{ object.hard_cover}}</li>
-
+    <li><a href="{% url 'delete-book' object.id %}">Delete</a></li>
+    <li><a href="{% url 'delete-book-own' object.id %}">Delete OWN</a></li>
     <hr/>
     <!-- If object_list is empty  -->
     {% empty %}

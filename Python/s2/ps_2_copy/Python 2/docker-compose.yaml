@@ -39,6 +39,17 @@ services:
     networks:
       - pd_network
 
+  rabbitmq:
+    image: rabbitmq:3.12.4-management
+    hostname: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - ~/.docker-conf/rabbitmq/data/:/var/lib/rabbitmq/
+      - ~/.docker-conf/rabbitmq/log/:/var/log/rabbitmq
+    networks:
+      - pd_network
 
 volumes:
   pgdata:
