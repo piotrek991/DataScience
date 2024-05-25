@@ -15,6 +15,7 @@ class BookAdmin(admin.ModelAdmin):
 class EventAdmin(admin.ModelAdmin):
     list_filter = ("country", "city","start_date", "end_date","authors")
     search_fields = ("name", "country", "city", "street")
+    list_display = ("name", "active")
     # def has_change_permission(self, request, obj=None):
     #     if obj is not None and obj.start_date < timezone.now():
     #         return False

@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     "django_celery_results",
     "django_celery_beat",
     'books',
+    "django_extensions"
 ]
 
 MIDDLEWARE = [
@@ -132,6 +133,34 @@ CELERY_BROKER_URL = "amqp://guest:guest@rabbitmq:5672/"
 
 CELERY_BEAT_SCHEDULE = {
 "generate_reports_live": {
-"task": "pd_ds.celery.calculation",
+"task": "books.tasks.calculation",
 "schedule": crontab(), # Run daily at midnight
 },}
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'standard': {
+            'format': '%(asctime)s [%(levelname)s] [%(filename)s:%(lineno)s - %(funcName)s() ] %(name)s: %(message)s'
+        },
+    },
+    'handlers': {
+        'default': {
+            'level': 'INFO',
+            'formatter': 'standard',
+            'class': 'logging.handlers.TimedRotatingFileHandler',
+            'filename': 'logger.log',
+            'when': 'midnight',
+            'interval': 1
+        }
+    },
+    'loggers': {
+        '': {
+            'handlers': ['default'],
+            'level': 'INFO',
+            'propagate': False
+        }
+    }
+}
+CELERYD_HIJACK_ROOT_LOGGER = False
