@@ -138,29 +138,64 @@ CELERY_BEAT_SCHEDULE = {
 },}
 
 LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'formatters': {
-        'standard': {
-            'format': '%(asctime)s [%(levelname)s] [%(filename)s:%(lineno)s - %(funcName)s() ] %(name)s: %(message)s'
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "verbose": {
+            "format": "{levelname} {asctime} {module} {process:d} {thread:d} {message}",
+            "style": "{",
+        },
+        "simple": {
+            "format": "{levelname} {message}",
+            "style": "{",
         },
     },
-    'handlers': {
-        'default': {
-            'level': 'INFO',
-            'formatter': 'standard',
-            'class': 'logging.handlers.TimedRotatingFileHandler',
-            'filename': 'logger.log',
-            'when': 'midnight',
-            'interval': 1
-        }
+    "filters": {
+        # "special": {
+        #     "()": "books.logging.SpecialFilter",
+        #     "foo": "bar",
+        # },
+        "require_debug_true": {
+            "()": "django.utils.log.RequireDebugTrue",
+        },
     },
-    'loggers': {
-        '': {
-            'handlers': ['default'],
-            'level': 'INFO',
-            'propagate': False
-        }
-    }
+    "handlers": {
+        "console": {
+            "level": "INFO",
+            "filters": ["require_debug_true"],
+            "class": "logging.StreamHandler",
+            "formatter": "simple",
+        },
+        "mail_admins": {
+            "level": "ERROR",
+            "class": "django.utils.log.AdminEmailHandler"
+            # "filters": ["special"],
+        },
+    },
+    "loggers": {
+        "django": {
+            "handlers": ["console"],
+            "propagate": True,
+        },
+        "django.request": {
+            "handlers": ["console"],
+            "level": "ERROR",
+            "propagate": False,
+        },
+        "books": {
+            "handlers": ["console"],
+            "level": "INFO"
+            # "filters": ["special"],
+        },
+        "celery": {
+            "handlers": ["console"],
+            "level": "DEBUG"
+            # "filters": ["special"],
+        },
+        "celery.beat": {
+            "handlers": ["console"],
+            "level": "DEBUG"
+            # "filters": ["special"],
+        },
+    },
 }
-CELERYD_HIJACK_ROOT_LOGGER = False

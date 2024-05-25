@@ -25,6 +25,54 @@ services:
     networks:
       - pd_network
 
+  celery_beat:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: pd:latest
+    env_file:
+      - .env
+      - .env.local
+    stdin_open: true
+    tty: true
+    volumes:
+      - .:/usr/src/app/
+      - ~/.aws/:/root/.aws:ro
+    command: bash -c "celery -A "pd_ds.celery" beat -l INFO"
+    #    command: bash -c "python"
+    links:
+      - postgres
+      - rabbitmq
+    depends_on:
+      - postgres
+      - rabbitmq
+    networks:
+      - pd_network
+
+  celery_worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: pd:latest
+    env_file:
+      - .env
+      - .env.local
+    stdin_open: true
+    tty: true
+    volumes:
+      - .:/usr/src/app/
+      - ~/.aws/:/root/.aws:ro
+    command: bash -c "celery -A "pd_ds.celery" worker -l INFO"
+    #    command: bash -c "python"
+    links:
+      - postgres
+      - rabbitmq
+    depends_on:
+      - postgres
+      - rabbitmq
+    networks:
+      - pd_network
+
   postgres:
     hostname: "postgres"
     image: "postgres:13.2"

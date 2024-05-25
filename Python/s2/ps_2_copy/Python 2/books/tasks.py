@@ -2,9 +2,15 @@ from pd_ds.celery import app
 from django.utils import timezone
 from books.models import Book, Author, Event
 from celery.utils.log import get_task_logger
+import logging
 
-logger = get_task_logger(__name__)
+logger = get_task_logger('books')
 
+
+# @app.signals.after_setup_task_logger.connect
+# def after_setup_logging(logger, **kwargs):
+#     celery_handler = logging_settings['handlers']['celery_file']
+#     logger.addHandler(celery_handler)
 
 @app.task
 def calculation():
